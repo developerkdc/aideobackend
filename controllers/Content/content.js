@@ -15,105 +15,153 @@ import mongoose from "mongoose";
 import Errorhandler from "../../utils/errorHandler.js";
 import ApiFeatures from "../../utils/apiFeatures.js";
 import Credits from "../../models/Credits.js";
+import Log from "../../models/Logs.js";
 const mkdirAsync = promisify(fs.mkdir);
 
-export const addContent1 = catchAsyncErrors(async (req, res, next) => {
-  const {
-    title,
-    zip,
-    tags,
-    ageRating,
-    language,
-    thumbnail,
-    livelink,
-    creatorId,
-    description,
-    story,
-    visual,
-    audio,
-    completeProject,
-    allocated,
-  } = req.body;
+// export const addContent = catchAsyncErrors(async (req, res, next) => {
+//   const {
+//     title,
+//     zip,
+//     tags,
+//     ageRating,
+//     language,
+//     thumbnail,
+//     livelink,
+//     creatorId,
+//     description,
+//     story,
+//     visual,
+//     audio,
+//     completeProject,
+//     allocated,
+//   } = req.body;
 
-  // Ensure both files are provided
-  if (!zip || !thumbnail) {
-    return res
-      .status(400)
-      .json({ error: "Both zipfile and imagefile are required" });
-  }
+//   // Ensure both files are provided
+//   if (!zip || !thumbnail) {
+//     return res
+//       .status(400)
+//       .json({ error: "Both zipfile and imagefile are required" });
+//   }
 
-  // Create a new content object
-  const content = new Content({
-    title,
-    zip,
-    tags,
-    ageRating,
-    language,
-    thumbnail,
-    livelink,
-    creatorId: req.user._id,
-    description,
-    story,
-    visual,
-    audio,
-    completeProject,
-    allocated, // Assuming you have user authentication and req.user contains the user ID
-  });
+//   // Create a new content object
+//   const content = new Content({
+//     title,
+//     zip,
+//     tags,
+//     ageRating,
+//     language,
+//     thumbnail,
+//     livelink,
+//     creatorId: req.user._id,
+//     description,
+//     story,
+//     visual,
+//     audio,
+//     completeProject,
+//     allocated, // Assuming you have user authentication and req.user contains the user ID
+//   });
 
-  // Save the content object to the database
-  const savedContent = await content.save();
+//   // Save the content object to the database
+//   const savedContent = await content.save();
 
-  const contentId = savedContent._id;
+//   const contentId = savedContent._id;
 
-  // Update the user's contentId field
-  await User.findByIdAndUpdate(req.user._id, { contentId });
+//   // Update the user's contentId field
+//   await User.findByIdAndUpdate(req.user._id, {
+//     $push: { contentId: savedContent._id },
+//   });
 
-  // Extract files from the zip and update ContentData
-  const zipFile = new AdmZip(fs.readFileSync(zip));
-  const zipEntries = zipFile.getEntries();
+//   // Extract files from the zip and update ContentData
+//   const zipFile = new AdmZip(fs.readFileSync(zip));
+//   const zipEntries = zipFile.getEntries();
 
-  const folderName = path.basename(zip, path.extname(zip));
-  const folderEntries = zipEntries.filter((entry) =>
-    entry.entryName.startsWith(folderName)
-  );
+//   const folderName = path.basename(zip, path.extname(zip));
+//   const folderEntries = zipEntries.filter((entry) =>
+//     entry.entryName.startsWith(folderName)
+//   );
 
-  // Check if the zip file contains the expected folder
-  if (folderEntries.length === 0) {
-    return res.status(400).json({ error: "Invalid zip file structure" });
-  }
+//   // Check if the zip file contains the expected folder
+//   if (folderEntries.length === 0) {
+//     return res.status(400).json({ error: "Invalid zip file structure" });
+//   }
+//   res.status(200).json("Content Uploaded Successfully");
+//   // Get the current file path
+//   const currentFilePath = fileURLToPath(import.meta.url);
 
-  // Get the current file path
-  const currentFilePath = fileURLToPath(import.meta.url);
+//   // Determine the directory path
+//   const uploadDirectory = path.join(dirname(currentFilePath), "uploads");
 
-  // Determine the directory path
-  const uploadDirectory = path.join(dirname(currentFilePath), "jsonFiles");
+//   // Create the directory if it doesn't exist
+//   if (!fs.existsSync(uploadDirectory)) {
+//     fs.mkdirSync(uploadDirectory, { recursive: true });
+//   }
 
-  // Create the directory if it doesn't exist
-  if (!fs.existsSync(uploadDirectory)) {
-    fs.mkdirSync(uploadDirectory, { recursive: true });
-  }
+//   // Find the index.json entry
+//   const indexJsonEntry = folderEntries.find(
+//     (entry) => entry.name === "index.json"
+//   );
 
-  // Find the index.json entry
-  const indexJsonEntry = folderEntries.find(
-    (entry) => entry.name === "index.json"
-  );
+//   // Check if index.json is found
+//   if (!indexJsonEntry) {
+//     return res.status(400).json({ error: "index.json file not found" });
+//   }
 
-  // Check if index.json is found
-  if (!indexJsonEntry) {
-    return res.status(400).json({ error: "index.json file not found" });
-  }
+//   // Generate a unique filename for index.json
+//   const uniqueFileName = `${Date.now()}-index.json`;
 
-  // Generate a unique filename for index.json
-  const uniqueFileName = `${Date.now()}-index.json`;
+//   // Save the index.json file to the desired directory
+//   const indexJsonPath = path.join(uploadDirectory, uniqueFileName);
+//   fs.writeFileSync(indexJsonPath, indexJsonEntry.getData());
 
-  // Save the index.json file to the desired directory
-  const indexJsonPath = path.join(uploadDirectory, uniqueFileName);
-  fs.writeFileSync(indexJsonPath, indexJsonEntry.getData());
+//   const jsondata = JSON.parse(fs.readFileSync(indexJsonPath));
 
-  const jsondata = JSON.parse(fs.readFileSync(indexJsonPath));
+//   // Create a folder for the content ID
+//   const contentFolder = path.join(uploadDirectory, contentId.toString());
 
-  res.status(200).json(jsondata);
-});
+//   // Create the folder if it doesn't exist
+//   if (!fs.existsSync(contentFolder)) {
+//     fs.mkdirSync(contentFolder, { recursive: true });
+//   }
+
+//   // Process and update file paths in index.json
+//   const processFilePaths = (obj, basePath = "") => {
+//     if (typeof obj !== "object" || obj === null) {
+//       return;
+//     }
+//     for (let key in obj) {
+//       if (key === "Source" && typeof obj[key] === "string") {
+//         const filePath = obj[key];
+//         const fileName = path.basename(filePath);
+//         const folderPath = path.join(
+//           "controllers",
+//           "Content",
+//           "uploads",
+//           contentId.toString()
+//         );
+//         const newFilePath = path.join(basePath, folderPath, fileName);
+//         obj[key] = newFilePath;
+//         const fileEntry = folderEntries.find((entry) =>
+//           entry.entryName.endsWith(fileName)
+//         );
+//         if (fileEntry) {
+//           const filePath = path.join(folderPath, fileName);
+//           fs.writeFileSync(filePath, fileEntry.getData());
+//         }
+//       } else {
+//         processFilePaths(obj[key], basePath);
+//       }
+//     }
+//   };
+
+//   processFilePaths(jsondata, "");
+
+//   // Update the contentData field in the content object
+//   await Content.findByIdAndUpdate(
+//     content._id,
+//     { contentData: jsondata },
+//     { new: true, useFindAndModify: false }
+//   );
+// });
 
 export const addContent = catchAsyncErrors(async (req, res, next) => {
   const {
@@ -198,19 +246,9 @@ export const addContent = catchAsyncErrors(async (req, res, next) => {
     (entry) => entry.name === "index.json"
   );
 
-  // Check if index.json is found
   if (!indexJsonEntry) {
     return res.status(400).json({ error: "index.json file not found" });
   }
-
-  // Generate a unique filename for index.json
-  const uniqueFileName = `${Date.now()}-index.json`;
-
-  // Save the index.json file to the desired directory
-  const indexJsonPath = path.join(uploadDirectory, uniqueFileName);
-  fs.writeFileSync(indexJsonPath, indexJsonEntry.getData());
-
-  const jsondata = JSON.parse(fs.readFileSync(indexJsonPath));
 
   // Create a folder for the content ID
   const contentFolder = path.join(uploadDirectory, contentId.toString());
@@ -219,6 +257,14 @@ export const addContent = catchAsyncErrors(async (req, res, next) => {
   if (!fs.existsSync(contentFolder)) {
     fs.mkdirSync(contentFolder, { recursive: true });
   }
+
+  // Save the index.json file to the content folder
+  const contentIndexPath = path.join(contentFolder, "index.json");
+  fs.writeFileSync(contentIndexPath, indexJsonEntry.getData());
+
+  // Read the original index.json file
+  const originalIndexJson = JSON.parse(indexJsonEntry.getData().toString());
+  const intactIndexJson = JSON.parse(indexJsonEntry.getData().toString());
 
   // Process and update file paths in index.json
   const processFilePaths = (obj, basePath = "") => {
@@ -229,19 +275,14 @@ export const addContent = catchAsyncErrors(async (req, res, next) => {
       if (key === "Source" && typeof obj[key] === "string") {
         const filePath = obj[key];
         const fileName = path.basename(filePath);
-        const folderPath = path.join(
-          "controllers",
-          "Content",
-          "uploads",
-          contentId.toString()
-        );
-        const newFilePath = path.join(basePath, folderPath, fileName);
+        const folderPath = path.join(contentFolder, fileName);
+        const newFilePath = path.join(basePath, folderPath);
         obj[key] = newFilePath;
         const fileEntry = folderEntries.find((entry) =>
           entry.entryName.endsWith(fileName)
         );
         if (fileEntry) {
-          const filePath = path.join(folderPath, fileName);
+          const filePath = path.join(contentFolder, fileName);
           fs.writeFileSync(filePath, fileEntry.getData());
         }
       } else {
@@ -250,22 +291,24 @@ export const addContent = catchAsyncErrors(async (req, res, next) => {
     }
   };
 
-  processFilePaths(jsondata, "");
+  processFilePaths(originalIndexJson, "");
 
-  // Update the contentData field in the content object
-  await Content.findByIdAndUpdate(
+   // Update the contentData field in the content object
+   await Content.findByIdAndUpdate(
     content._id,
-    { contentData: jsondata },
+    { contentData: JSON.stringify(intactIndexJson) },
     { new: true, useFindAndModify: false }
   );
+
+  res.status(200).json("Content Uploaded Successfully");
 });
 
 export const uploadFiles = catchAsyncErrors(async (req, res, next) => {
-  console.log(req.files);
+  // console.log(req.files);
   const zipFile = req.files["zipFile"][0]; // Assuming a single zip file is uploaded
   const imageFile = req.files["imageFile"][0]; // Assuming a single image file is uploaded
-  console.log(zipFile);
-  console.log(imageFile);
+  // console.log(zipFile);
+  // console.log(imageFile);
   const zipFilePath = zipFile.path;
   const imageFilePath = imageFile.path;
 
@@ -526,7 +569,7 @@ export const allocateUserToVerify = catchAsyncErrors(async (req, res, next) => {
 
 export const getContentByTags = catchAsyncErrors(async (req, res, next) => {
   const tagIds = req.body.tagIds; // Assuming tag IDs are provided as "tagIds" in the request body
-  console.log(tagIds);
+  // console.log(tagIds);
 
   const content = await Content.find({
     tags: { $in: tagIds },
@@ -600,14 +643,61 @@ export const getContentByTopic = catchAsyncErrors(async (req, res, next) => {
 });
 
 export const getCreditsName = catchAsyncErrors(async (req, res, next) => {
-  console.log("rehan");
   const credits = await Credits.find();
   return res.status(200).json(credits);
 });
 
 export const addCredits = catchAsyncErrors(async (req, res, next) => {
-  const { name } = req.body;
-  const credits = new Credits({ name: name });
-  const savedCredits = await credits.save();
+  const { names } = req.body;
+
+  const savedCredits = [];
+
+  for (let i = 0; i < names.length; i++) {
+    const existingCredit = await Credits.findOne({ name: names[i] });
+    if (existingCredit) {
+      // Skip adding duplicate name
+      // console.log(`Name "${names[i]}" already exists. Skipping...`);
+      continue;
+    }
+
+    const credits = new Credits({ name: names[i] });
+    const savedCredit = await credits.save();
+    savedCredits.push(savedCredit);
+  }
+
   res.status(200).json(savedCredits);
+});
+
+export const getContentById = catchAsyncErrors(async (req, res, next) => {
+  const { id } = req.params;
+  const content = await Content.findById(id).populate("creatorId","name thumbnail");
+  res.status(200).json(content);
+});
+
+export const getContentByCity = catchAsyncErrors(async (req, res, next) => {
+  const { city } = req.params;
+  const logs = await Log.find({ city: city })
+    .select("contentId watchDuration")
+    .populate({
+      path: "contentId",
+      populate: { path: "creatorId", select: "name thumbnail" },
+    })
+    .sort({ watchDuration: -1 });
+
+  // Group logs by contentId and track the maximum watch duration for each contentId
+  const contentIdMap = new Map();
+  logs.forEach((log) => {
+    const { contentId, watchDuration } = log;
+    if (
+      !contentIdMap.has(contentId) ||
+      watchDuration > contentIdMap.get(contentId).watchDuration
+    ) {
+      contentIdMap.set(contentId, log);
+    }
+  });
+
+  // Extract the data of unique contentIds with the highest watch duration
+  const uniqueContentData = Array.from(contentIdMap.values());
+
+  res.send(uniqueContentData);
 });

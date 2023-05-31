@@ -4,8 +4,10 @@ import {
     addTopic,
     addTopicContent,
     arrangeTopic,
+    configTopicSelectType,
     deleteTopic,
     editTopic,
+    getAllTopicByCity,
     getAllTopics,
     updateTopicStatus,
 } from "../controllers/Topic/topic.js";
@@ -27,4 +29,7 @@ router.patch(
     authorizeRoles("admin", "manager"),
     addTopicContent
 );
+router.patch("/config/:topicId", configTopicSelectType);
+
+
 export default router;

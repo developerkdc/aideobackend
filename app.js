@@ -11,6 +11,7 @@ import languageRoutes from "./routes/language.js";
 import tagRoutes from "./routes/tag.js";
 import topicRoutes from "./routes/topic.js";
 import contentRoutes from "./routes/content.js";
+import mobileRoutes from "./routes/mobile.js";
 import { isAuthenticatedUser } from "./middlewares/auth.js";
 import cors from "cors";
 
@@ -37,6 +38,11 @@ app.use(`${api_url}/tag`, isAuthenticatedUser, tagRoutes);
 app.use(`${api_url}/topic`, isAuthenticatedUser, topicRoutes);
 app.use(`${api_url}/content`, isAuthenticatedUser, contentRoutes);
 
+app.use(`${api_url}/mobile`, mobileRoutes);
+
+app.use('/uploads', express.static('uploads'));
+app.use('/profile-pics', express.static('profile-pics'));
+app.use('/controllers', express.static('controllers'));
 //Middlewares
 app.use(errorMiddleware);
 

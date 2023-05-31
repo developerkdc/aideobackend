@@ -39,6 +39,12 @@ export const updateDetails = catchAsyncErrors(async (req, res, next) => {
         name: req.body.name,
         email: req.body.email,
     };
+    console.log(req.file)
+    console.log("rehan")
+    if (req.file) {
+        // If a file was uploaded, save the relative path in the newUserData object
+        newUserData.thumbnail = req.file.path;
+      }
 
     const user = await User.findByIdAndUpdate(req.user.id, newUserData, {
         new: true,
