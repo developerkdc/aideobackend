@@ -42,7 +42,7 @@ export const registerUser = catchAsyncErrors(async (req, res) => {
         createdDate,
     });
     const savedUser = await newUser.save();
-    const message = `Your Email:${email} \n\n Use this password to sign in to your account : ${randomPassword} \n\n  Sign In Page : http://localhost:3000/user/login`;
+    const message = `Your Email:${email} \n\n Use this password to sign in to your account : ${randomPassword} \n\n  Sign In Page : https://aideofrontend.vercel.app/user/login`;
 
     try {
         await sendEmail({
