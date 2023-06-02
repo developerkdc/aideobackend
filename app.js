@@ -22,12 +22,18 @@ app.use(express.json());
 app.use(bodyParser.json());
 app.use(cookieParser());
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://aideofrontend-q2fpyoukg-rehanpathan-kdigital.vercel.app/",
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true,
+  })
+);
 // Exception Handling
 process.on("uncaughtException", (err) => {
-    console.log(`Error:${err.message}`);
-    console.log("Shutting down the server due to uncaughtExeption");
-    process.exit(1);
+  console.log(`Error:${err.message}`);
+  console.log("Shutting down the server due to uncaughtExeption");
+  process.exit(1);
 });
 
 // Main Routes
@@ -40,9 +46,9 @@ app.use(`${api_url}/content`, isAuthenticatedUser, contentRoutes);
 
 app.use(`${api_url}/mobile`, mobileRoutes);
 
-app.use('/uploads', express.static('uploads'));
-app.use('/profile-pics', express.static('profile-pics'));
-app.use('/controllers', express.static('controllers'));
+app.use("/uploads", express.static("uploads"));
+app.use("/profile-pics", express.static("profile-pics"));
+app.use("/controllers", express.static("controllers"));
 //Middlewares
 app.use(errorMiddleware);
 
@@ -50,11 +56,11 @@ app.use(errorMiddleware);
 const PORT = process.env.PORT;
 
 mongoose
-    .connect(process.env.MONGO_URL, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-    })
-    .then(() => {
-        app.listen(PORT, () => console.log(`Server Port: ${PORT}`));
-    })
-    .catch((error) => console.log(`${error} did not connect`));
+  .connect(process.env.MONGO_URL, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    app.listen(PORT, () => console.log(`Server Port: ${PORT}`));
+  })
+  .catch((error) => console.log(`${error} did not connect`));
