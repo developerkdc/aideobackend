@@ -293,10 +293,10 @@ export const addContent = catchAsyncErrors(async (req, res, next) => {
 
   processFilePaths(originalIndexJson, "");
 
-   // Update the contentData field in the content object
-   await Content.findByIdAndUpdate(
+  // Update the contentData field in the content object
+  await Content.findByIdAndUpdate(
     content._id,
-    { contentData: JSON.stringify(intactIndexJson),thumbnail:thumbnail },
+    { contentData: JSON.stringify(intactIndexJson), thumbnail: thumbnail },
     { new: true, useFindAndModify: false }
   );
 
@@ -670,7 +670,10 @@ export const addCredits = catchAsyncErrors(async (req, res, next) => {
 
 export const getContentById = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
-  const content = await Content.findById(id).populate("creatorId","name thumbnail");
+  const content = await Content.findById(id).populate(
+    "creatorId",
+    "name thumbnail"
+  );
   res.status(200).json(content);
 });
 
@@ -684,7 +687,8 @@ export const getContentByCity = catchAsyncErrors(async (req, res, next) => {
         { path: "creatorId", select: "name thumbnail" },
         { path: "tags", select: "name" },
       ],
-      select: "_id title zip tags ageRating language thumbnail createdDate creatorId description story visual audio completeProject allocated liveStatus verifiedStatus merchandise __v contentData verifiedBy disabledDate liveDate"
+      select:
+        "_id title zip tags ageRating language thumbnail createdDate creatorId description story visual audio completeProject allocated liveStatus verifiedStatus merchandise __v contentData verifiedBy disabledDate liveDate",
     })
     .sort({ watchDuration: -1 });
 
@@ -705,7 +709,11 @@ export const getContentByCity = catchAsyncErrors(async (req, res, next) => {
     ...log.contentId._doc,
     watchDuration: log.watchDuration,
   }));
-  const allContent = await Content.find()
-  const data = [...uniqueContentData,...allContent]
+  const allContent = await Content.find().populate([
+    { path: "creatorId", select: "name thumbnail" },
+    { path: "tags", select: "name" }
+  ]);
+
+  const data = [...uniqueContentData, ...allContent];
   res.send(data);
 });
