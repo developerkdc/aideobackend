@@ -296,7 +296,7 @@ export const addContent = catchAsyncErrors(async (req, res, next) => {
    // Update the contentData field in the content object
    await Content.findByIdAndUpdate(
     content._id,
-    { contentData: JSON.stringify(intactIndexJson) },
+    { contentData: JSON.stringify(intactIndexJson),thumbnail:thumbnail },
     { new: true, useFindAndModify: false }
   );
 
@@ -680,7 +680,11 @@ export const getContentByCity = catchAsyncErrors(async (req, res, next) => {
     .select("contentId watchDuration")
     .populate({
       path: "contentId",
-      populate: { path: "creatorId", select: "name thumbnail" },
+      populate: [
+        { path: "creatorId", select: "name thumbnail" },
+        { path: "tags", select: "name" },
+      ],
+      select: "_id title zip tags ageRating language thumbnail createdDate creatorId description story visual audio completeProject allocated liveStatus verifiedStatus merchandise __v contentData verifiedBy disabledDate liveDate"
     })
     .sort({ watchDuration: -1 });
 
@@ -697,7 +701,11 @@ export const getContentByCity = catchAsyncErrors(async (req, res, next) => {
   });
 
   // Extract the data of unique contentIds with the highest watch duration
-  const uniqueContentData = Array.from(contentIdMap.values());
-
-  res.send(uniqueContentData);
+  const uniqueContentData = Array.from(contentIdMap.values()).map((log) => ({
+    ...log.contentId._doc,
+    watchDuration: log.watchDuration,
+  }));
+  const allContent = await Content.find()
+  const data = [...uniqueContentData,...allContent]
+  res.send(data);
 });
