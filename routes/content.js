@@ -37,7 +37,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 router.post("/", addContent);
-router.get("/", authorizeRoles("admin"), getAllContent);
+router.get("/", authorizeRoles("admin", "manager"), getAllContent);
 router.get("/getCredits", getCreditsName);
 router.get("/mycontent", getContentByCreatorId);
 router.post("/status", updateContentVerifyStatus);
