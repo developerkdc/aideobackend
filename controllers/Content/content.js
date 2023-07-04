@@ -355,7 +355,7 @@ export const getContentByCreatorId = catchAsyncErrors(
     const currentUser = req.user;
     const apiFeature = new ApiFeatures(
       Content.find({ creatorId: currentUser._id })
-        .select("-contentData")
+        // .select("-contentData")
         .populate({
           path: "creatorId",
           select: "name _id email",
@@ -711,7 +711,7 @@ export const getContentByCity = catchAsyncErrors(async (req, res, next) => {
   }));
   const allContent = await Content.find().populate([
     { path: "creatorId", select: "name thumbnail" },
-    { path: "tags", select: "name" }
+    { path: "tags", select: "name" },
   ]);
 
   const data = [...uniqueContentData, ...allContent];
